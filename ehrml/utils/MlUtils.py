@@ -221,7 +221,7 @@ def buildEnsembleXGBoostModel(XVitalsAvg, XVitalsMin, XVitalsMax, XVitalsFirst, 
 
     log.info('Performing Hyperparameter optimisation for XGBoost')
 
-    xgbParams = performXgbHyperparameterTuning(XVitalsMax, y)
+    xgbParams = performXgbHyperparameterTuning(XVitalsAvgTrain, yTrain)
 
     log.info('Performing Hyperparameter optimisation for Logistic Regression')
 
@@ -231,7 +231,7 @@ def buildEnsembleXGBoostModel(XVitalsAvg, XVitalsMin, XVitalsMax, XVitalsFirst, 
     }
 
     lrGrid = GridSearchCV(LogisticRegression(), lrParameters)
-    lrGrid.fit(XVitalsMax, y)
+    lrGrid.fit(XVitalsAvgTrain, yTrain)
 
     lrParams = lrGrid.cv_results_['params'][list(lrGrid.cv_results_['rank_test_score']).index(1)]
 
@@ -285,6 +285,8 @@ def buildEnsembleXGBoostModel(XVitalsAvg, XVitalsMin, XVitalsMax, XVitalsFirst, 
 
         probsDict[('MLP', label)] = mlpProbs
 
+    log.info('Building ensemble model')
+
     import pandas as pd
 
     Xnew = pd.DataFrame()
@@ -292,6 +294,12 @@ def buildEnsembleXGBoostModel(XVitalsAvg, XVitalsMin, XVitalsMax, XVitalsFirst, 
     for key, value in probsDict.items():
         Xnew[key[0] + '_' + key[1]] = value
 
-    xgbEnsembleNewScores = buildXGBoostModel(Xnew, yTest)
+    from xgboost import XGBClassifier
+    from sklearn.model_selection import cross_validate
 
-    return xgbEnsembleNewScores
+    xgb = XGBClassifier(use_label_encoder=False)
+    xgbScores = cross_validate(xgb, Xnew, yTest, cv=5, scoring=['accuracy', 'balanced_accuracy',  'average_precision', 'f1', 'roc_auc'])
+    # xgbScores['test_mccf1_score'] = cross_validate(xgb, X, y, cv=5, scoring = make_scorer(calculateMccF1, greater_is_better=True))['test_score']
+    # xgbEnsembleNewScores = buildXGBoostModel(Xnew, yTest)
+
+    return xgbScores
