@@ -1,6 +1,6 @@
 import logging
 
-log = logging.getLogger("EHR-ML")
+log = logging.getLogger("EHR-QC")
 
 
 def filterWindow(dataDf, anchorTimeColumn, measurementTimeColumn, windowStart, windowEnd):
