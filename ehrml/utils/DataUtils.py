@@ -78,3 +78,21 @@ def readData(dirPath, idColumns=['id'], targetColumn='target', anchorDateColumn=
     yAgg = yAgg.drop(columns=idColumns)
 
     return X, XVitalsAvgAgg, XVitalsMinAgg, XVitalsMaxAgg, XVitalsFirstAgg, XVitalsLastAgg, XLabsAvgAgg, XLabsMinAgg, XLabsMaxAgg, XLabsFirstAgg, XLabsLastAgg, yAgg
+
+
+def saveCvScores(scores_dict, dirPath, fileName):
+
+    import os
+    import json
+    from pathlib import Path
+
+    if not os.path.exists(dirPath):
+        os.makedirs(dirPath)
+
+    cvScoresPath = Path(dirPath, fileName)
+
+    for key, value in scores_dict.items():
+        scores_dict[key] = value.tolist()
+
+    with open(cvScoresPath, 'w') as fp:
+        json.dump(scores_dict, fp, indent=4)

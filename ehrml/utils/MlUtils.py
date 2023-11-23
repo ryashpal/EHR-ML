@@ -15,8 +15,6 @@ def calculateMccF1(x, y):
 
     old_stdout = sys.stdout # backup current stdout
     sys.stdout = open(os.devnull, "w")
-    print('y', y)
-    print('x', x)
     p = robjects.FloatVector(x)
     t = robjects.FloatVector(y)
     calculateMccf1 = robjects.r['mccf1']
@@ -196,13 +194,14 @@ def buildXGBoostModel(X, y):
     return xgbScores
 
 
-def buildEnsembleXGBoostModel(XVitalsAvg, XVitalsMin, XVitalsMax, XVitalsFirst, XVitalsLast, XLabsAvg, XLabsMin, XLabsMax, XLabsFirst, XLabsLast, y):
+def buildEnsembleXGBoostModel(X, XVitalsAvg, XVitalsMin, XVitalsMax, XVitalsFirst, XVitalsLast, XLabsAvg, XLabsMin, XLabsMax, XLabsFirst, XLabsLast, y):
 
     log.info('Split data to test and train sets')
 
     from sklearn.model_selection import train_test_split
 
-    XVitalsAvgTrain, XVitalsAvgTest, XVitalsMinTrain, XVitalsMinTest, XVitalsMaxTrain, XVitalsMaxTest, XVitalsFirstTrain, XVitalsFirstTest, XVitalsLastTrain, XVitalsLastTest, XLabsAvgTrain, XLabsAvgTest, XLabsMinTrain, XLabsMinTest, XLabsMaxTrain, XLabsMaxTest, XLabsFirstTrain, XLabsFirstTest, XLabsLastTrain, XLabsLastTest, yTrain, yTest = train_test_split(
+    XTrain, XTest, XVitalsAvgTrain, XVitalsAvgTest, XVitalsMinTrain, XVitalsMinTest, XVitalsMaxTrain, XVitalsMaxTest, XVitalsFirstTrain, XVitalsFirstTest, XVitalsLastTrain, XVitalsLastTest, XLabsAvgTrain, XLabsAvgTest, XLabsMinTrain, XLabsMinTest, XLabsMaxTrain, XLabsMaxTest, XLabsFirstTrain, XLabsFirstTest, XLabsLastTrain, XLabsLastTest, yTrain, yTest = train_test_split(
+        X,
         XVitalsAvg,
         XVitalsMin,
         XVitalsMax,
@@ -225,11 +224,11 @@ def buildEnsembleXGBoostModel(XVitalsAvg, XVitalsMin, XVitalsMax, XVitalsFirst, 
     from sklearn.model_selection import GridSearchCV
     from sklearn.metrics import make_scorer
 
-    log.info('Performing Hyperparameter optimisation for XGBoost')
+    log.info('Performing Hyperparameter optimisation for XGBoost smaller models')
 
     xgbParams = performXgbHyperparameterTuning(XVitalsAvgTrain, yTrain)
 
-    log.info('Performing Hyperparameter optimisation for Logistic Regression')
+    log.info('Performing Hyperparameter optimisation for Logistic Regression smaller models')
 
     lrParameters={
         'solver': ['newton-cg', 'liblinear'],
@@ -241,53 +240,70 @@ def buildEnsembleXGBoostModel(XVitalsAvg, XVitalsMin, XVitalsMax, XVitalsFirst, 
 
     lrParams = lrGrid.cv_results_['params'][list(lrGrid.cv_results_['rank_test_score']).index(1)]
 
+    log.info('Performing Hyperparameter optimisation for XGBoost full model')
+
+    xgbFullParams = performXgbHyperparameterTuning(XTrain, yTrain)
+
+    log.info('Performing Hyperparameter optimisation for Logistic Regression full model')
+
+    lrParameters={
+        'solver': ['newton-cg', 'liblinear'],
+        'C': [100, 10, 1.0, 0.1, 0.01],
+    }
+
+    lrGrid = GridSearchCV(LogisticRegression(), lrParameters)
+    lrGrid.fit(XTrain, yTrain)
+
+    lrFullParams = lrGrid.cv_results_['params'][list(lrGrid.cv_results_['rank_test_score']).index(1)]
+
     XDict = {
-        'VitalsMax': (XVitalsMaxTrain, XVitalsMaxTest),
-        'VitalsMin': (XVitalsMinTrain, XVitalsMinTest),
-        'VitalsAvg': (XVitalsAvgTrain, XVitalsAvgTest),
-        'VitalsFirst': (XVitalsFirstTrain, XVitalsFirstTest),
-        'VitalsLast': (XVitalsLastTrain, XVitalsLastTest),
-        'LabsMax': (XLabsMaxTrain, XLabsMaxTest),
-        'LabsMin': (XLabsMinTrain, XLabsMinTest),
-        'LabsAvg': (XLabsAvgTrain, XLabsAvgTest),
-        'LabsFirst': (XLabsFirstTrain, XLabsFirstTest),
-        'LabsLast': (XLabsLastTrain, XLabsLastTest),
+        'Full': (XTrain, XTest, xgbFullParams, lrFullParams),
+        'VitalsMax': (XVitalsMaxTrain, XVitalsMaxTest, xgbParams, lrParams),
+        'VitalsMin': (XVitalsMinTrain, XVitalsMinTest, xgbParams, lrParams),
+        'VitalsAvg': (XVitalsAvgTrain, XVitalsAvgTest, xgbParams, lrParams),
+        'VitalsFirst': (XVitalsFirstTrain, XVitalsFirstTest, xgbParams, lrParams),
+        'VitalsLast': (XVitalsLastTrain, XVitalsLastTest, xgbParams, lrParams),
+        'LabsMax': (XLabsMaxTrain, XLabsMaxTest, xgbParams, lrParams),
+        'LabsMin': (XLabsMinTrain, XLabsMinTest, xgbParams, lrParams),
+        'LabsAvg': (XLabsAvgTrain, XLabsAvgTest, xgbParams, lrParams),
+        'LabsFirst': (XLabsFirstTrain, XLabsFirstTest, xgbParams, lrParams),
+        'LabsLast': (XLabsLastTrain, XLabsLastTest, xgbParams, lrParams),
     }
 
     probsDict = {}
 
     log.info('Building individual models')
 
-    for label, (XTrain, XTest) in XDict.items():
+    for label, (XAggTrain, XAggTest, xgbModelParams, lrModelParams) in XDict.items():
 
         xgb = XGBClassifier(use_label_encoder=False)
-        xgb.set_params(**xgbParams)
-        xgb.fit(XTrain, yTrain)
+        xgb.set_params(**xgbModelParams)
+        xgb.fit(XAggTrain, yTrain)
 
-        xgbProbs = [p for _, p in xgb.predict_proba(XTest)]
+        xgbProbs = [p for _, p in xgb.predict_proba(XAggTest)]
 
         probsDict[('XGB', label)] = xgbProbs
 
         lr = LogisticRegression()
-        lr.set_params(**lrParams)
-        lr.fit(XTrain, yTrain)
+        lr.set_params(**lrModelParams)
+        lr.fit(XAggTrain, yTrain)
 
-        lrProbs = [p2 for p1, p2 in lr.predict_proba(XTest)]
+        lrProbs = [p2 for p1, p2 in lr.predict_proba(XAggTest)]
 
         probsDict[('LR', label)] = lrProbs
 
         lgbm = LGBMClassifier(verbose=-1)
-        lgbm.set_params(**xgbParams)
-        lgbm.fit(XTrain, yTrain)
+        lgbm.set_params(**xgbModelParams)
+        lgbm.fit(XAggTrain, yTrain)
 
-        lgbmProbs = [p2 for p1, p2 in lgbm.predict_proba(XTest)]
+        lgbmProbs = [p2 for p1, p2 in lgbm.predict_proba(XAggTest)]
 
         probsDict[('LGBM', label)] = lgbmProbs
 
-        mlp = MLPClassifier(random_state=1, max_iter=300, hidden_layer_sizes = (200, 200))
-        mlp.fit(XTrain, yTrain)
+        mlp = MLPClassifier(random_state=1, max_iter=300, hidden_layer_sizes = ((XAggTrain.shape[1] * 2), (XAggTrain.shape[1] * 2)))
+        mlp.fit(XAggTrain, yTrain)
 
-        mlpProbs = [p2 for p1, p2 in mlp.predict_proba(XTest)]
+        mlpProbs = [p2 for p1, p2 in mlp.predict_proba(XAggTest)]
 
         probsDict[('MLP', label)] = mlpProbs
 
