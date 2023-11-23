@@ -74,10 +74,11 @@ def readData(dirPath, idColumns=['id'], targetColumn='target', anchorDateColumn=
     XLabsMaxAgg = XLabsMaxAgg.drop(columns=idColumns)
     XLabsFirstAgg = XLabsFirstAgg.drop(columns=idColumns)
     XLabsLastAgg = XLabsLastAgg.drop(columns=idColumns)
-    X = X.drop(columns=idColumns)
+    XAgg = X.drop(columns=idColumns)
+    idsDf =yAgg[idColumns]
     yAgg = yAgg.drop(columns=idColumns)
 
-    return X, XVitalsAvgAgg, XVitalsMinAgg, XVitalsMaxAgg, XVitalsFirstAgg, XVitalsLastAgg, XLabsAvgAgg, XLabsMinAgg, XLabsMaxAgg, XLabsFirstAgg, XLabsLastAgg, yAgg
+    return XAgg, XVitalsAvgAgg, XVitalsMinAgg, XVitalsMaxAgg, XVitalsFirstAgg, XVitalsLastAgg, XLabsAvgAgg, XLabsMinAgg, XLabsMaxAgg, XLabsFirstAgg, XLabsLastAgg, yAgg, idsDf
 
 
 def saveCvScores(scores_dict, dirPath, fileName):

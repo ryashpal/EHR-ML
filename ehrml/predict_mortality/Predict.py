@@ -21,11 +21,13 @@ def run(dirPath, idColumns, targetColumn, measurementDateColumn, windowStart, wi
         windowStart=windowStart,
         windowEnd=windowEnd,
         )
-    X, XVitalsAvg, XVitalsMin, XVitalsMax, XVitalsFirst, XVitalsLast, XLabsAvg, XLabsMin, XLabsMax, XLabsFirst, XLabsLast, y = data
+    X, XVitalsAvg, XVitalsMin, XVitalsMax, XVitalsFirst, XVitalsLast, XLabsAvg, XLabsMin, XLabsMax, XLabsFirst, XLabsLast, y, idsDf = data
 
-    scoresDict = MlUtils.predictEnsembleXGBoostModel(X, XVitalsAvg, XVitalsMin, XVitalsMax, XVitalsFirst, XVitalsLast, XLabsAvg, XLabsMin, XLabsMax, XLabsFirst, XLabsLast, y[args.target_column[0]], modelFilePath=modelPath)
-    
-    log.info('scoresDict: ', scoresDict)
+    preds = MlUtils.predictEnsembleXGBoostModel(X, XVitalsAvg, XVitalsMin, XVitalsMax, XVitalsFirst, XVitalsLast, XLabsAvg, XLabsMin, XLabsMax, XLabsFirst, XLabsLast, y[args.target_column[0]], modelFilePath=modelPath)
+
+    saveDf = idsDf
+    saveDf['preds'] = preds
+    log.info('saveDf: ' + str(saveDf))
 
 
 if __name__ == '__main__':

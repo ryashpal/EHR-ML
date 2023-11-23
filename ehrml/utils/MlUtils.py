@@ -468,37 +468,18 @@ def predictEnsembleXGBoostModel(X, XVitalsAvg, XVitalsMin, XVitalsMax, XVitalsFi
 
     log.info('Split data to test and train sets')
 
-    from sklearn.model_selection import train_test_split
-
-    XTrain, XTest, XVitalsAvgTrain, XVitalsAvgTest, XVitalsMinTrain, XVitalsMinTest, XVitalsMaxTrain, XVitalsMaxTest, XVitalsFirstTrain, XVitalsFirstTest, XVitalsLastTrain, XVitalsLastTest, XLabsAvgTrain, XLabsAvgTest, XLabsMinTrain, XLabsMinTest, XLabsMaxTrain, XLabsMaxTest, XLabsFirstTrain, XLabsFirstTest, XLabsLastTrain, XLabsLastTest, yTrain, yTest = train_test_split(
-        X,
-        XVitalsAvg,
-        XVitalsMin,
-        XVitalsMax,
-        XVitalsFirst,
-        XVitalsLast,
-        XLabsAvg,
-        XLabsMin,
-        XLabsMax,
-        XLabsFirst,
-        XLabsLast,
-        y,
-        test_size=0.5,
-        random_state=42
-        )
-
     XDict = {
-        'Full': (XTrain, yTrain, XTest, yTest),
-        'VitalsMax': (XVitalsMaxTrain, yTrain, XVitalsMaxTest, yTest),
-        'VitalsMin': (XVitalsMinTrain, yTrain, XVitalsMinTest, yTest),
-        'VitalsAvg': (XVitalsAvgTrain, yTrain, XVitalsAvgTest, yTest),
-        'VitalsFirst': (XVitalsFirstTrain, yTrain, XVitalsFirstTest, yTest),
-        'VitalsLast': (XVitalsLastTrain, yTrain, XVitalsLastTest, yTest),
-        'LabsMax': (XLabsMaxTrain, yTrain, XLabsMaxTest, yTest),
-        'LabsMin': (XLabsMinTrain, yTrain, XLabsMinTest, yTest),
-        'LabsAvg': (XLabsAvgTrain, yTrain, XLabsAvgTest, yTest),
-        'LabsFirst': (XLabsFirstTrain, yTrain, XLabsFirstTest, yTest),
-        'LabsLast': (XLabsLastTrain, yTrain, XLabsLastTest, yTest),
+        'Full': X,
+        'VitalsMax': XVitalsMax,
+        'VitalsMin': XVitalsMin,
+        'VitalsAvg': XVitalsAvg,
+        'VitalsFirst': XVitalsFirst,
+        'VitalsLast': XVitalsLast,
+        'LabsMax': XLabsMax,
+        'LabsMin': XLabsMin,
+        'LabsAvg': XLabsAvg,
+        'LabsFirst': XLabsFirst,
+        'LabsLast': XLabsLast,
     }
     allModelsDict = {}
     with open(modelFilePath, 'rb') as f:
@@ -511,5 +492,5 @@ def predictEnsembleXGBoostModel(X, XVitalsAvg, XVitalsMin, XVitalsMax, XVitalsFi
             model = standaloneModelsDict[label][model_name]
             probs = [p for _, p in model.predict_proba(XDict[label])]
             Xnew[label + '_' + model_name] = probs
-    probs = [p for _, p in allModelsDict['level_1'].predict_proba(Xnew)][0]
-    return {'score': str(probs)}
+    probs = [p for _, p in allModelsDict['level_1'].predict_proba(Xnew)]
+    return probs
