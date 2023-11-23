@@ -1,3 +1,7 @@
+import pickle
+
+import pandas as pd
+
 import logging
 
 log = logging.getLogger("EHR-ML")
@@ -132,6 +136,28 @@ def buildLRModel(X, y):
     return lrScores
 
 
+def performLrHyperparameterTuning(X, y):
+
+    from sklearn.linear_model import LogisticRegression
+    from sklearn.model_selection import GridSearchCV
+
+    lrParameters={
+        'solver': ['newton-cg', 'liblinear'],
+        'C': [100, 10, 1.0, 0.1, 0.01],
+    }
+
+    log.info('Hyperparameter optimisation for: ' + str(lrParameters))
+
+    lrGrid = GridSearchCV(LogisticRegression(), lrParameters)
+    lrGrid.fit(X, y)
+
+    params = lrGrid.cv_results_['params'][list(lrGrid.cv_results_['rank_test_score']).index(1)]
+
+    log.info('params: ' + str(params))
+
+    return params
+
+
 def getBestXgbHyperparameter(X, y, tuned_params, parameters):
 
     from xgboost import XGBClassifier
@@ -194,7 +220,7 @@ def buildXGBoostModel(X, y):
     return xgbScores
 
 
-def buildEnsembleXGBoostModel(X, XVitalsAvg, XVitalsMin, XVitalsMax, XVitalsFirst, XVitalsLast, XLabsAvg, XLabsMin, XLabsMax, XLabsFirst, XLabsLast, y):
+def evaluateEnsembleXGBoostModel(X, XVitalsAvg, XVitalsMin, XVitalsMax, XVitalsFirst, XVitalsLast, XLabsAvg, XLabsMin, XLabsMax, XLabsFirst, XLabsLast, y):
 
     log.info('Split data to test and train sets')
 
@@ -307,7 +333,7 @@ def buildEnsembleXGBoostModel(X, XVitalsAvg, XVitalsMin, XVitalsMax, XVitalsFirs
 
         probsDict[('MLP', label)] = mlpProbs
 
-    log.info('Building ensemble model')
+    log.info('Performing cross validation for ensemble model')
 
     import pandas as pd
 
@@ -322,6 +348,168 @@ def buildEnsembleXGBoostModel(X, XVitalsAvg, XVitalsMin, XVitalsMax, XVitalsFirs
     xgb = XGBClassifier(use_label_encoder=False)
     xgbScores = cross_validate(xgb, Xnew, yTest, cv=5, scoring=['accuracy', 'balanced_accuracy',  'average_precision', 'f1', 'roc_auc'])
     xgbScores['test_mccf1_score'] = cross_validate(xgb, Xnew, yTest, cv=5, scoring = make_scorer(calculateMccF1, greater_is_better=True))['test_score']
-    # xgbEnsembleNewScores = buildXGBoostModel(Xnew, yTest)
 
     return xgbScores
+
+
+def buildStandaloneModels(XTrain, yTrain):
+
+        from xgboost import XGBClassifier
+        from sklearn.linear_model import LogisticRegression
+        from lightgbm import LGBMClassifier
+        from sklearn.neural_network import MLPClassifier
+
+        log.info('Performing Hyperparameter optimisation for XGBoost')
+
+        # xgbParams = performXgbHyperparameterTuning(XTrain, yTrain)
+
+        log.info('Building XGB model')
+        xgb = XGBClassifier(use_label_encoder=False)
+        # xgb.set_params(**xgbParams)
+        xgb.fit(XTrain, yTrain)
+
+        log.info('Performing Hyperparameter optimisation for Logistic Regression')
+
+        lrParams = performLrHyperparameterTuning(XTrain, yTrain)
+
+        log.info('Building LR Model')
+        lr = LogisticRegression()
+        lr.set_params(**lrParams)
+        lr.fit(XTrain, yTrain)
+
+        log.info('Building LGBM Model')
+        lgbm = LGBMClassifier(verbose=-1)
+        # lgbm.set_params(**xgbParams)
+        lgbm.fit(XTrain, yTrain)
+
+        log.info('Building MLP Model')
+        mlp = MLPClassifier(random_state=1, max_iter=300, hidden_layer_sizes = (150, 150))
+        mlp.fit(XTrain, yTrain)
+
+        return {'xgb': xgb, 'lr': lr, 'lgbm': lgbm, 'mlp': mlp}
+
+
+def buildEnsembleXGBoostModel(X, XVitalsAvg, XVitalsMin, XVitalsMax, XVitalsFirst, XVitalsLast, XLabsAvg, XLabsMin, XLabsMax, XLabsFirst, XLabsLast, y):
+
+    log.info('Split data to test and train sets')
+
+    from sklearn.metrics import roc_auc_score
+    from sklearn.model_selection import train_test_split
+    from xgboost import XGBClassifier
+
+    XTrain, XTest, XVitalsAvgTrain, XVitalsAvgTest, XVitalsMinTrain, XVitalsMinTest, XVitalsMaxTrain, XVitalsMaxTest, XVitalsFirstTrain, XVitalsFirstTest, XVitalsLastTrain, XVitalsLastTest, XLabsAvgTrain, XLabsAvgTest, XLabsMinTrain, XLabsMinTest, XLabsMaxTrain, XLabsMaxTest, XLabsFirstTrain, XLabsFirstTest, XLabsLastTrain, XLabsLastTest, yTrain, yTest = train_test_split(
+        X,
+        XVitalsAvg,
+        XVitalsMin,
+        XVitalsMax,
+        XVitalsFirst,
+        XVitalsLast,
+        XLabsAvg,
+        XLabsMin,
+        XLabsMax,
+        XLabsFirst,
+        XLabsLast,
+        y,
+        test_size=0.5,
+        random_state=42
+        )
+
+    XDict = {
+        'Full': (XTrain, yTrain, XTest, yTest),
+        'VitalsMax': (XVitalsMaxTrain, yTrain, XVitalsMaxTest, yTest),
+        'VitalsMin': (XVitalsMinTrain, yTrain, XVitalsMinTest, yTest),
+        'VitalsAvg': (XVitalsAvgTrain, yTrain, XVitalsAvgTest, yTest),
+        'VitalsFirst': (XVitalsFirstTrain, yTrain, XVitalsFirstTest, yTest),
+        'VitalsLast': (XVitalsLastTrain, yTrain, XVitalsLastTest, yTest),
+        'LabsMax': (XLabsMaxTrain, yTrain, XLabsMaxTest, yTest),
+        'LabsMin': (XLabsMinTrain, yTrain, XLabsMinTest, yTest),
+        'LabsAvg': (XLabsAvgTrain, yTrain, XLabsAvgTest, yTest),
+        'LabsFirst': (XLabsFirstTrain, yTrain, XLabsFirstTest, yTest),
+        'LabsLast': (XLabsLastTrain, yTrain, XLabsLastTest, yTest),
+    }
+
+    log.info('Building standalone models')
+
+    standaloneModelsDict = {}
+    for label, (XTrain, yTrain, XTest, yTest) in XDict.items():
+        log.info('Models for the label: ' + label)
+        standaloneModelsDict[label] = buildStandaloneModels(XTrain, yTrain)
+
+    Xnew = pd.DataFrame()
+    for label in standaloneModelsDict.keys():
+        for model_name in standaloneModelsDict[label].keys():
+            log.info('Performing prediction for the label: ' + label + ', model_name: ' + model_name)
+            model = standaloneModelsDict[label][model_name]
+            probs = [p for _, p in model.predict_proba(XDict[label][2])]
+            auroc = roc_auc_score(XDict[label][3], probs)
+            log.info('label: ' + label + ', model: ' + model_name + ' - Model (Testing) AUROC score: ' + str(auroc))
+            Xnew[label + '_' + model_name] = probs
+
+    log.info('Performing Hyperparameter optimisation for XGBoost Ensemble model')
+
+    xgbParams = performXgbHyperparameterTuning(Xnew, yTest)
+
+    log.info('Building XGB Ensemble model')
+
+    xgb = XGBClassifier(use_label_encoder=False)
+    xgb.set_params(**xgbParams)
+    xgb.fit(Xnew, yTest)
+    probs = [p for _, p in xgb.predict_proba(Xnew)]
+    auroc = roc_auc_score(yTest, probs)
+
+    log.info('XGB Ensemble Model (Training) AUROC score: ' + str(auroc))
+
+    allModelsDict = {'level_1': xgb, 'level_0': standaloneModelsDict}
+
+    return allModelsDict
+
+
+def predictEnsembleXGBoostModel(X, XVitalsAvg, XVitalsMin, XVitalsMax, XVitalsFirst, XVitalsLast, XLabsAvg, XLabsMin, XLabsMax, XLabsFirst, XLabsLast, y, modelFilePath):
+
+    log.info('Split data to test and train sets')
+
+    from sklearn.model_selection import train_test_split
+
+    XTrain, XTest, XVitalsAvgTrain, XVitalsAvgTest, XVitalsMinTrain, XVitalsMinTest, XVitalsMaxTrain, XVitalsMaxTest, XVitalsFirstTrain, XVitalsFirstTest, XVitalsLastTrain, XVitalsLastTest, XLabsAvgTrain, XLabsAvgTest, XLabsMinTrain, XLabsMinTest, XLabsMaxTrain, XLabsMaxTest, XLabsFirstTrain, XLabsFirstTest, XLabsLastTrain, XLabsLastTest, yTrain, yTest = train_test_split(
+        X,
+        XVitalsAvg,
+        XVitalsMin,
+        XVitalsMax,
+        XVitalsFirst,
+        XVitalsLast,
+        XLabsAvg,
+        XLabsMin,
+        XLabsMax,
+        XLabsFirst,
+        XLabsLast,
+        y,
+        test_size=0.5,
+        random_state=42
+        )
+
+    XDict = {
+        'Full': (XTrain, yTrain, XTest, yTest),
+        'VitalsMax': (XVitalsMaxTrain, yTrain, XVitalsMaxTest, yTest),
+        'VitalsMin': (XVitalsMinTrain, yTrain, XVitalsMinTest, yTest),
+        'VitalsAvg': (XVitalsAvgTrain, yTrain, XVitalsAvgTest, yTest),
+        'VitalsFirst': (XVitalsFirstTrain, yTrain, XVitalsFirstTest, yTest),
+        'VitalsLast': (XVitalsLastTrain, yTrain, XVitalsLastTest, yTest),
+        'LabsMax': (XLabsMaxTrain, yTrain, XLabsMaxTest, yTest),
+        'LabsMin': (XLabsMinTrain, yTrain, XLabsMinTest, yTest),
+        'LabsAvg': (XLabsAvgTrain, yTrain, XLabsAvgTest, yTest),
+        'LabsFirst': (XLabsFirstTrain, yTrain, XLabsFirstTest, yTest),
+        'LabsLast': (XLabsLastTrain, yTrain, XLabsLastTest, yTest),
+    }
+    allModelsDict = {}
+    with open(modelFilePath, 'rb') as f:
+        allModelsDict = pickle.load(f)
+    standaloneModelsDict = allModelsDict['level_0']
+    Xnew = pd.DataFrame()
+    for label in standaloneModelsDict.keys():
+        for model_name in standaloneModelsDict[label].keys():
+            log.info('Performing prediction for the label: ' + label + ', model_name: ' + model_name)
+            model = standaloneModelsDict[label][model_name]
+            probs = [p for _, p in model.predict_proba(XDict[label])]
+            Xnew[label + '_' + model_name] = probs
+    probs = [p for _, p in allModelsDict['level_1'].predict_proba(Xnew)][0]
+    return {'score': str(probs)}

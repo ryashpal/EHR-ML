@@ -86,7 +86,10 @@ def saveCvScores(scores_dict, dirPath, fileName):
     import json
     from pathlib import Path
 
+    log.info('Saving the results!!')
+
     if not os.path.exists(dirPath):
+        log.info('Creating directory: ' + str(dirPath))
         os.makedirs(dirPath)
 
     cvScoresPath = Path(dirPath, fileName)
@@ -94,5 +97,27 @@ def saveCvScores(scores_dict, dirPath, fileName):
     for key, value in scores_dict.items():
         scores_dict[key] = value.tolist()
 
+    log.info('Save path:' + str(cvScoresPath))
+
     with open(cvScoresPath, 'w') as fp:
         json.dump(scores_dict, fp, indent=4)
+
+
+def saveModels(model, dirPath, fileName):
+
+    import os
+    import pickle
+    from pathlib import Path
+
+    log.info('Saving the model!!')
+
+    if not os.path.exists(dirPath):
+        log.info('Creating directory: ' + str(dirPath))
+        os.makedirs(dirPath)
+
+    savePath = Path(dirPath, fileName)
+
+    log.info('Save path:' + str(savePath))
+
+    with open(savePath, 'wb') as handle:
+        pickle.dump(model, handle, protocol=pickle.HIGHEST_PROTOCOL)
