@@ -15,6 +15,8 @@ def calculateMccF1(x, y):
 
     old_stdout = sys.stdout # backup current stdout
     sys.stdout = open(os.devnull, "w")
+    print('y', y)
+    print('x', x)
     p = robjects.FloatVector(x)
     t = robjects.FloatVector(y)
     calculateMccf1 = robjects.r['mccf1']
@@ -97,6 +99,9 @@ def buildLGBMModel(X, y):
 
 def buildLRModel(X, y):
     log.info('Performing Hyperparameter optimisation')
+
+    log.info('y:')
+    log.info(y)
 
     from sklearn.metrics import make_scorer
 
@@ -218,6 +223,7 @@ def buildEnsembleXGBoostModel(XVitalsAvg, XVitalsMin, XVitalsMax, XVitalsFirst, 
     from lightgbm import LGBMClassifier
     from sklearn.neural_network import MLPClassifier
     from sklearn.model_selection import GridSearchCV
+    from sklearn.metrics import make_scorer
 
     log.info('Performing Hyperparameter optimisation for XGBoost')
 
@@ -299,7 +305,7 @@ def buildEnsembleXGBoostModel(XVitalsAvg, XVitalsMin, XVitalsMax, XVitalsFirst, 
 
     xgb = XGBClassifier(use_label_encoder=False)
     xgbScores = cross_validate(xgb, Xnew, yTest, cv=5, scoring=['accuracy', 'balanced_accuracy',  'average_precision', 'f1', 'roc_auc'])
-    # xgbScores['test_mccf1_score'] = cross_validate(xgb, X, y, cv=5, scoring = make_scorer(calculateMccF1, greater_is_better=True))['test_score']
+    xgbScores['test_mccf1_score'] = cross_validate(xgb, Xnew, yTest, cv=5, scoring = make_scorer(calculateMccF1, greater_is_better=True))['test_score']
     # xgbEnsembleNewScores = buildXGBoostModel(Xnew, yTest)
 
     return xgbScores

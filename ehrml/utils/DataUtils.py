@@ -3,18 +3,18 @@ import logging
 log = logging.getLogger("EHR-ML")
 
 
-def filterWindow(dataDf, anchorTimeColumn, measurementTimeColumn, windowStart, windowEnd):
+def filterWindow(dataDf, anchorDateColumn, measurementDateColumn, windowStart, windowEnd):
 
     import pandas as pd
 
-    dataDf[anchorTimeColumn] = pd.to_datetime(dataDf[anchorTimeColumn])
-    dataDf[measurementTimeColumn] = pd.to_datetime(dataDf[measurementTimeColumn])
-    dataDf = dataDf[(dataDf[measurementTimeColumn] >= (dataDf[anchorTimeColumn] - pd.Timedelta(days=windowStart))) & (dataDf[measurementTimeColumn] <= (dataDf[anchorTimeColumn] + pd.Timedelta(days=windowEnd)))]
+    dataDf[anchorDateColumn] = pd.to_datetime(dataDf[anchorDateColumn])
+    dataDf[measurementDateColumn] = pd.to_datetime(dataDf[measurementDateColumn])
+    dataDf = dataDf[(dataDf[measurementDateColumn] >= (dataDf[anchorDateColumn] - pd.Timedelta(days=windowStart))) & (dataDf[measurementDateColumn] <= (dataDf[anchorDateColumn] + pd.Timedelta(days=windowEnd)))]
 
     return dataDf
 
 
-def readEicuData(dirPath, windowStart=0, windowEnd=3, targetColumn='death_adm', anchorTimeColumn='visit_start_date_adm', measurementTimeColumn='measurement_date'):
+def readData(dirPath, idColumns=['id'], targetColumn='target', anchorDateColumn='visit_start_date_adm', measurementDateColumn='measurement_date', windowStart=0, windowEnd=3):
 
     import pandas as pd
 
@@ -22,62 +22,59 @@ def readEicuData(dirPath, windowStart=0, windowEnd=3, targetColumn='death_adm', 
 
     dataDf = filterWindow(
         dataDf=dataDf,
-        anchorTimeColumn=anchorTimeColumn,
-        measurementTimeColumn=measurementTimeColumn,
+        anchorDateColumn=anchorDateColumn,
+        measurementDateColumn=measurementDateColumn,
         windowStart=windowStart,
         windowEnd=windowEnd
         )
 
-    vitalsCols = ['systemic_mean', 'systemic_diastolic', 'systemic_systolic', 'respiration', 'heartrate', 'sao2']
-    labsCols = ['Sodium level', 'Blood urea nitrogen', 'Creatinine level', 'Potassium level', 'Chloride', 'Hematocrit', 'Haemoglobin estimation', 'Platelet count', 'Red blood cell count', 'Calcium level', 'MCV - Mean corpuscular volume', 'MCHC - Mean corpuscular haemoglobin concentration', 'MCH - Mean corpuscular haemoglobin', 'White blood cell count', 'Red blood cell distribution width', 'Glucose level', 'Bicarbonate level', 'Anion gap']
+    XVitalsAvg = dataDf[idColumns + [measurementDateColumn] + [col for col in dataDf.columns if (col.startswith('vitals_') and col.endswith('_avg'))]]
+    XVitalsMin = dataDf[idColumns + [measurementDateColumn] + [col for col in dataDf.columns if (col.startswith('vitals_') and col.endswith('_min'))]]
+    XVitalsMax = dataDf[idColumns + [measurementDateColumn] + [col for col in dataDf.columns if (col.startswith('vitals_') and col.endswith('_max'))]]
+    XVitalsFirst = dataDf[idColumns + [measurementDateColumn] + [col for col in dataDf.columns if (col.startswith('vitals_') and col.endswith('_first'))]]
+    XVitalsLast = dataDf[idColumns + [measurementDateColumn] + [col for col in dataDf.columns if (col.startswith('vitals_') and col.endswith('_last'))]]
+    XLabsAvg = dataDf[idColumns + [measurementDateColumn] + [col for col in dataDf.columns if (col.startswith('labs_') and col.endswith('_avg'))]]
+    XLabsMin = dataDf[idColumns + [measurementDateColumn] + [col for col in dataDf.columns if (col.startswith('labs_') and col.endswith('_min'))]]
+    XLabsMax = dataDf[idColumns + [measurementDateColumn] + [col for col in dataDf.columns if (col.startswith('labs_') and col.endswith('_max'))]]
+    XLabsFirst = dataDf[idColumns + [measurementDateColumn] + [col for col in dataDf.columns if (col.startswith('labs_') and col.endswith('_first'))]]
+    XLabsLast = dataDf[idColumns + [measurementDateColumn] + [col for col in dataDf.columns if (col.startswith('labs_') and col.endswith('_last'))]]
 
-    XVitalsAvg = dataDf[['person_id', 'visit_occurrence_id', 'measurement_date'] + [vitalCol + '_avg' for vitalCol in vitalsCols if vitalCol + '_avg' in dataDf.columns]]
-    XVitalsMin = dataDf[['person_id', 'visit_occurrence_id', 'measurement_date'] + [vitalCol + '_min' for vitalCol in vitalsCols if vitalCol + '_min' in dataDf.columns]]
-    XVitalsMax = dataDf[['person_id', 'visit_occurrence_id', 'measurement_date'] + [vitalCol + '_max' for vitalCol in vitalsCols if vitalCol + '_max' in dataDf.columns]]
-    XVitalsFirst = dataDf[['person_id', 'visit_occurrence_id', 'measurement_date'] + [vitalCol + '_first' for vitalCol in vitalsCols if vitalCol + '_first' in dataDf.columns]]
-    XVitalsLast = dataDf[['person_id', 'visit_occurrence_id', 'measurement_date'] + [vitalCol + '_last' for vitalCol in vitalsCols if vitalCol + '_last' in dataDf.columns]]
-    XLabsAvg = dataDf[['person_id', 'visit_occurrence_id', 'measurement_date'] + [labsCol + '_avg' for labsCol in labsCols if labsCol + '_avg' in dataDf.columns]]
-    XLabsMin = dataDf[['person_id', 'visit_occurrence_id', 'measurement_date'] + [labsCol + '_min' for labsCol in labsCols if labsCol + '_min' in dataDf.columns]]
-    XLabsMax = dataDf[['person_id', 'visit_occurrence_id', 'measurement_date'] + [labsCol + '_max' for labsCol in labsCols if labsCol + '_max' in dataDf.columns]]
-    XLabsFirst = dataDf[['person_id', 'visit_occurrence_id', 'measurement_date'] + [labsCol + '_first' for labsCol in labsCols if labsCol + '_first' in dataDf.columns]]
-    XLabsLast = dataDf[['person_id', 'visit_occurrence_id', 'measurement_date'] + [labsCol + '_last' for labsCol in labsCols if labsCol + '_last' in dataDf.columns]]
+    y = dataDf[idColumns + [targetColumn]]
 
-    y = dataDf[['person_id', 'visit_occurrence_id'] + [targetColumn]]
-
-    XVitalsAvgAgg = XVitalsAvg.groupby(['person_id', 'visit_occurrence_id']).mean().reset_index().drop(columns='measurement_date')
-    XVitalsMinAgg = XVitalsMin.groupby(['person_id', 'visit_occurrence_id']).min().reset_index().drop(columns='measurement_date')
-    XVitalsMaxAgg = XVitalsMax.groupby(['person_id', 'visit_occurrence_id']).max().reset_index().drop(columns='measurement_date')
-    XVitalsFirstAgg = XVitalsFirst.sort_values(['person_id', 'visit_occurrence_id', 'measurement_date'], ascending=True).groupby(['person_id', 'visit_occurrence_id']).first().reset_index().drop(columns='measurement_date')
-    XVitalsLastAgg = XVitalsLast.sort_values(['person_id', 'visit_occurrence_id', 'measurement_date'], ascending=False).groupby(['person_id', 'visit_occurrence_id']).first().reset_index().drop(columns='measurement_date')
-    XLabsAvgAgg = XLabsAvg.groupby(['person_id', 'visit_occurrence_id']).mean().reset_index().drop(columns='measurement_date')
-    XLabsMinAgg = XLabsMin.groupby(['person_id', 'visit_occurrence_id']).min().reset_index().drop(columns='measurement_date')
-    XLabsMaxAgg = XLabsMax.groupby(['person_id', 'visit_occurrence_id']).max().reset_index().drop(columns='measurement_date')
-    XLabsFirstAgg = XLabsFirst.sort_values(['person_id', 'visit_occurrence_id', 'measurement_date'], ascending=True).groupby(['person_id', 'visit_occurrence_id']).first().reset_index().drop(columns='measurement_date')
-    XLabsLastAgg = XLabsLast.sort_values(['person_id', 'visit_occurrence_id', 'measurement_date'], ascending=False).groupby(['person_id', 'visit_occurrence_id']).first().reset_index().drop(columns='measurement_date')
-    yAgg = y.groupby(['person_id', 'visit_occurrence_id']).first().reset_index()
+    XVitalsAvgAgg = XVitalsAvg.groupby(idColumns).mean().reset_index().drop(columns=measurementDateColumn)
+    XVitalsMinAgg = XVitalsMin.groupby(idColumns).min().reset_index().drop(columns=measurementDateColumn)
+    XVitalsMaxAgg = XVitalsMax.groupby(idColumns).max().reset_index().drop(columns=measurementDateColumn)
+    XVitalsFirstAgg = XVitalsFirst.sort_values(idColumns + [measurementDateColumn], ascending=True).groupby(idColumns).first().reset_index().drop(columns=measurementDateColumn)
+    XVitalsLastAgg = XVitalsLast.sort_values(idColumns + [measurementDateColumn], ascending=False).groupby(idColumns).first().reset_index().drop(columns=measurementDateColumn)
+    XLabsAvgAgg = XLabsAvg.groupby(idColumns).mean().reset_index().drop(columns=measurementDateColumn)
+    XLabsMinAgg = XLabsMin.groupby(idColumns).min().reset_index().drop(columns=measurementDateColumn)
+    XLabsMaxAgg = XLabsMax.groupby(idColumns).max().reset_index().drop(columns=measurementDateColumn)
+    XLabsFirstAgg = XLabsFirst.sort_values(idColumns + [measurementDateColumn], ascending=True).groupby(idColumns).first().reset_index().drop(columns=measurementDateColumn)
+    XLabsLastAgg = XLabsLast.sort_values(idColumns + [measurementDateColumn], ascending=False).groupby(idColumns).first().reset_index().drop(columns=measurementDateColumn)
+    yAgg = y.groupby(idColumns).first().reset_index()
 
     X = XVitalsAvgAgg\
-        .merge(XVitalsMinAgg, on=['person_id', 'visit_occurrence_id'], how='outer')\
-        .merge(XVitalsMaxAgg, on=['person_id', 'visit_occurrence_id'], how='outer')\
-        .merge(XVitalsFirstAgg, on=['person_id', 'visit_occurrence_id'], how='outer')\
-        .merge(XVitalsLastAgg, on=['person_id', 'visit_occurrence_id'], how='outer')\
-        .merge(XLabsAvgAgg, on=['person_id', 'visit_occurrence_id'], how='outer')\
-        .merge(XLabsMinAgg, on=['person_id', 'visit_occurrence_id'], how='outer')\
-        .merge(XLabsMaxAgg, on=['person_id', 'visit_occurrence_id'], how='outer')\
-        .merge(XLabsFirstAgg, on=['person_id', 'visit_occurrence_id'], how='outer')\
-        .merge(XLabsLastAgg, on=['person_id', 'visit_occurrence_id'], how='outer')
+        .merge(XVitalsMinAgg, on=idColumns, how='outer')\
+        .merge(XVitalsMaxAgg, on=idColumns, how='outer')\
+        .merge(XVitalsFirstAgg, on=idColumns, how='outer')\
+        .merge(XVitalsLastAgg, on=idColumns, how='outer')\
+        .merge(XLabsAvgAgg, on=idColumns, how='outer')\
+        .merge(XLabsMinAgg, on=idColumns, how='outer')\
+        .merge(XLabsMaxAgg, on=idColumns, how='outer')\
+        .merge(XLabsFirstAgg, on=idColumns, how='outer')\
+        .merge(XLabsLastAgg, on=idColumns, how='outer')
 
-    XVitalsAvgAgg = XVitalsAvgAgg.drop(columns=['person_id', 'visit_occurrence_id'])
-    XVitalsMinAgg = XVitalsMinAgg.drop(columns=['person_id', 'visit_occurrence_id'])
-    XVitalsMaxAgg = XVitalsMaxAgg.drop(columns=['person_id', 'visit_occurrence_id'])
-    XVitalsFirstAgg = XVitalsFirstAgg.drop(columns=['person_id', 'visit_occurrence_id'])
-    XVitalsLastAgg = XVitalsLastAgg.drop(columns=['person_id', 'visit_occurrence_id'])
-    XLabsAvgAgg = XLabsAvgAgg.drop(columns=['person_id', 'visit_occurrence_id'])
-    XLabsMinAgg = XLabsMinAgg.drop(columns=['person_id', 'visit_occurrence_id'])
-    XLabsMaxAgg = XLabsMaxAgg.drop(columns=['person_id', 'visit_occurrence_id'])
-    XLabsFirstAgg = XLabsFirstAgg.drop(columns=['person_id', 'visit_occurrence_id'])
-    XLabsLastAgg = XLabsLastAgg.drop(columns=['person_id', 'visit_occurrence_id'])
-    X = X.drop(columns=['person_id', 'visit_occurrence_id'])
-    yAgg = yAgg.drop(columns=['person_id', 'visit_occurrence_id'])
+    XVitalsAvgAgg = XVitalsAvgAgg.drop(columns=idColumns)
+    XVitalsMinAgg = XVitalsMinAgg.drop(columns=idColumns)
+    XVitalsMaxAgg = XVitalsMaxAgg.drop(columns=idColumns)
+    XVitalsFirstAgg = XVitalsFirstAgg.drop(columns=idColumns)
+    XVitalsLastAgg = XVitalsLastAgg.drop(columns=idColumns)
+    XLabsAvgAgg = XLabsAvgAgg.drop(columns=idColumns)
+    XLabsMinAgg = XLabsMinAgg.drop(columns=idColumns)
+    XLabsMaxAgg = XLabsMaxAgg.drop(columns=idColumns)
+    XLabsFirstAgg = XLabsFirstAgg.drop(columns=idColumns)
+    XLabsLastAgg = XLabsLastAgg.drop(columns=idColumns)
+    X = X.drop(columns=idColumns)
+    yAgg = yAgg.drop(columns=idColumns)
 
     return X, XVitalsAvgAgg, XVitalsMinAgg, XVitalsMaxAgg, XVitalsFirstAgg, XVitalsLastAgg, XLabsAvgAgg, XLabsMinAgg, XLabsMaxAgg, XLabsFirstAgg, XLabsLastAgg, yAgg
