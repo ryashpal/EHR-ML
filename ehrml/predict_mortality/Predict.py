@@ -6,8 +6,6 @@ import warnings
 
 warnings.filterwarnings("ignore")
 
-from pathlib import Path
-
 from ehrml.utils import DataUtils
 from ehrml.utils import MlUtils
 
