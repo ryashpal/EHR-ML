@@ -74,7 +74,7 @@ if __name__ == '__main__':
                         help='Number of days or data to include after time-zero. By default: [window_after=3]')
 
     parser.add_argument('-sp', '--save_path', nargs=1, default='./results.json',
-                        help='File to save the results')
+                        help='File path to save the results')
 
     args = parser.parse_args()
 

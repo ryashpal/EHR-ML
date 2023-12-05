@@ -1,3 +1,4 @@
+import os
 import logging
 
 log = logging.getLogger("EHR-ML")
@@ -6,11 +7,13 @@ import warnings
 
 warnings.filterwarnings("ignore")
 
+from pathlib import Path
+
 from ehrml.utils import DataUtils
 from ehrml.utils import MlUtils
 
 
-def run(dirPath, idColumns, targetColumn, measurementDateColumn, windowStart, windowEnd, modelPath):
+def run(dirPath, idColumns, targetColumn, measurementDateColumn, windowStart, windowEnd, modelPath, savePath):
     data = DataUtils.readData(
         dirPath=dirPath,
         idColumns=idColumns,
@@ -25,7 +28,15 @@ def run(dirPath, idColumns, targetColumn, measurementDateColumn, windowStart, wi
 
     saveDf = idsDf
     saveDf['preds'] = preds
-    log.info('saveDf: ' + str(saveDf))
+
+    dirPath = Path(savePath).parent
+    if not os.path.exists(dirPath):
+        log.info('Creating directory: ' + str(dirPath))
+        os.makedirs(dirPath)
+
+    log.info('saving the predictions')
+
+    saveDf.to_csv(savePath, index=False)
 
 
 if __name__ == '__main__':
@@ -67,6 +78,9 @@ if __name__ == '__main__':
     parser.add_argument('-mp', '--model_path', nargs=1, default='./model.pkl',
                         help='File containing the model')
 
+    parser.add_argument('-sp', '--save_path', nargs=1, default='./preds.csv',
+                        help='File path to save the model predictions')
+
     args = parser.parse_args()
 
     log.info('args.data_file: ' + str(args.data_file[0]))
@@ -76,6 +90,7 @@ if __name__ == '__main__':
     log.info('args.window_before: ' + str(args.window_before[0]))
     log.info('args.window_after: ' + str(args.window_after[0]))
     log.info('args.model_path: ' + str(args.model_path[0]))
+    log.info('args.save_path: ' + str(args.save_path[0]))
 
     run(
         dirPath=args.data_file[0],
@@ -84,5 +99,6 @@ if __name__ == '__main__':
         measurementDateColumn=args.measurement_date_column[0],
         windowStart=args.window_before[0],
         windowEnd=args.window_after[0],
-        modelPath=args.model_path[0]
+        modelPath=args.model_path[0],
+        savePath=args.save_path[0]
     )

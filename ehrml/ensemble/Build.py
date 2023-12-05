@@ -65,7 +65,7 @@ if __name__ == '__main__':
                         help='Number of days or data to include after time-zero. By default: [window_after=3]')
 
     parser.add_argument('-sp', '--save_path', nargs=1, default='./model.pkl',
-                        help='File to save the model')
+                        help='File path to save the model')
 
     args = parser.parse_args()
 
