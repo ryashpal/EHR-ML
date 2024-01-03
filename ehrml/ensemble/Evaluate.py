@@ -13,9 +13,10 @@ from ehrml.utils import DataUtils
 from ehrml.utils import MlUtils
 
 
-def run(dirPath, idColumns, targetColumn, measurementDateColumn, anchorDateColumn, windowStart, windowEnd, savePath):
+def run(dataPath, idColumns, targetColumn, measurementDateColumn, anchorDateColumn, windowStart, windowEnd, savePath):
+    log.info('Reading data from file: ' + str(dataPath))
     data = DataUtils.readData(
-        dirPath=dirPath,
+        dirPath=dataPath,
         idColumns=idColumns,
         targetColumn=targetColumn,
         measurementDateColumn=measurementDateColumn,
@@ -25,7 +26,11 @@ def run(dirPath, idColumns, targetColumn, measurementDateColumn, anchorDateColum
         )
     X, XVitalsAvg, XVitalsMin, XVitalsMax, XVitalsFirst, XVitalsLast, XLabsAvg, XLabsMin, XLabsMax, XLabsFirst, XLabsLast, y, idsDf = data
 
-    xgbEnsembleScores = MlUtils.evaluateEnsembleXGBoostModel(X, XVitalsAvg, XVitalsMin, XVitalsMax, XVitalsFirst, XVitalsLast, XLabsAvg, XLabsMin, XLabsMax, XLabsFirst, XLabsLast, y[args.target_column[0]])
+    log.info('Building XGB ensemble model')
+
+    xgbEnsembleScores = MlUtils.evaluateEnsembleXGBoostModel(X, XVitalsAvg, XVitalsMin, XVitalsMax, XVitalsFirst, XVitalsLast, XLabsAvg, XLabsMin, XLabsMax, XLabsFirst, XLabsLast, y[targetColumn])
+
+    log.info('Saving to file: ' + str(savePath))
 
     dirPath = Path(savePath).parent
     if not os.path.exists(dirPath):
@@ -88,11 +93,11 @@ if __name__ == '__main__':
     log.info('args.save_path: ' + str(args.save_path[0]))
 
     run(
-        dirPath=args.data_file[0],
+        dataPath=args.data_file[0],
         idColumns=args.id_columns,
         targetColumn=args.target_column[0],
-        anchorDateColumn=args.anchor_date_column[0],
         measurementDateColumn=args.measurement_date_column[0],
+        anchorDateColumn=args.anchor_date_column[0],
         windowStart=args.window_before[0],
         windowEnd=args.window_after[0],
         savePath=args.save_path[0]

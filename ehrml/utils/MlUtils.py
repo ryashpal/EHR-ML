@@ -252,6 +252,7 @@ def evaluateEnsembleXGBoostModel(X, XVitalsAvg, XVitalsMin, XVitalsMax, XVitalsF
 
     log.info('Performing Hyperparameter optimisation for XGBoost smaller models')
 
+    # xgbParams = {}
     xgbParams = performXgbHyperparameterTuning(XVitalsAvgTrain, yTrain)
 
     log.info('Performing Hyperparameter optimisation for Logistic Regression smaller models')
@@ -268,6 +269,7 @@ def evaluateEnsembleXGBoostModel(X, XVitalsAvg, XVitalsMin, XVitalsMax, XVitalsF
 
     log.info('Performing Hyperparameter optimisation for XGBoost full model')
 
+    # xgbFullParams = {}
     xgbFullParams = performXgbHyperparameterTuning(XTrain, yTrain)
 
     log.info('Performing Hyperparameter optimisation for Logistic Regression full model')
@@ -361,11 +363,11 @@ def buildStandaloneModels(XTrain, yTrain):
 
         log.info('Performing Hyperparameter optimisation for XGBoost')
 
-        # xgbParams = performXgbHyperparameterTuning(XTrain, yTrain)
+        xgbParams = performXgbHyperparameterTuning(XTrain, yTrain)
 
         log.info('Building XGB model')
         xgb = XGBClassifier(use_label_encoder=False)
-        # xgb.set_params(**xgbParams)
+        xgb.set_params(**xgbParams)
         xgb.fit(XTrain, yTrain)
 
         log.info('Performing Hyperparameter optimisation for Logistic Regression')
@@ -379,7 +381,7 @@ def buildStandaloneModels(XTrain, yTrain):
 
         log.info('Building LGBM Model')
         lgbm = LGBMClassifier(verbose=-1)
-        # lgbm.set_params(**xgbParams)
+        lgbm.set_params(**xgbParams)
         lgbm.fit(XTrain, yTrain)
 
         log.info('Building MLP Model')
@@ -432,8 +434,9 @@ def buildEnsembleXGBoostModel(X, XVitalsAvg, XVitalsMin, XVitalsMax, XVitalsFirs
 
     standaloneModelsDict = {}
     for label, (XTrain, yTrain, XTest, yTest) in XDict.items():
-        log.info('Models for the label: ' + label)
-        standaloneModelsDict[label] = buildStandaloneModels(XTrain, yTrain)
+        if not XTrain.empty:
+            log.info('Models for the label: ' + label)
+            standaloneModelsDict[label] = buildStandaloneModels(XTrain, yTrain)
 
     Xnew = pd.DataFrame()
     for label in standaloneModelsDict.keys():
@@ -465,8 +468,6 @@ def buildEnsembleXGBoostModel(X, XVitalsAvg, XVitalsMin, XVitalsMax, XVitalsFirs
 
 
 def predictEnsembleXGBoostModel(X, XVitalsAvg, XVitalsMin, XVitalsMax, XVitalsFirst, XVitalsLast, XLabsAvg, XLabsMin, XLabsMax, XLabsFirst, XLabsLast, y, modelFilePath):
-
-    log.info('Split data to test and train sets')
 
     XDict = {
         'Full': X,
