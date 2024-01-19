@@ -13,6 +13,7 @@ from ehrml.utils import MlUtils
 
 
 def run(dirPath, idColumns, targetColumn, measurementDateColumn, anchorDateColumn, windowStart, windowEnd, savePath):
+
     data = DataUtils.readData(
         dirPath=dirPath,
         idColumns=idColumns,
@@ -24,7 +25,7 @@ def run(dirPath, idColumns, targetColumn, measurementDateColumn, anchorDateColum
         )
     X, XVitalsAvg, XVitalsMin, XVitalsMax, XVitalsFirst, XVitalsLast, XLabsAvg, XLabsMin, XLabsMax, XLabsFirst, XLabsLast, y, idsDf = data
 
-    allModelsDict = MlUtils.buildEnsembleXGBoostModel(X, XVitalsAvg, XVitalsMin, XVitalsMax, XVitalsFirst, XVitalsLast, XLabsAvg, XLabsMin, XLabsMax, XLabsFirst, XLabsLast, y[args.target_column[0]])
+    allModelsDict = MlUtils.buildEnsembleXGBoostModel(X, XVitalsAvg, XVitalsMin, XVitalsMax, XVitalsFirst, XVitalsLast, XLabsAvg, XLabsMin, XLabsMax, XLabsFirst, XLabsLast, y[targetColumn])
     savePath = Path(savePath)
     DataUtils.saveModels(allModelsDict, savePath.parent, savePath.name)
 

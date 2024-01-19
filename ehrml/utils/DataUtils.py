@@ -7,8 +7,8 @@ def filterWindow(dataDf, anchorDateColumn, measurementDateColumn, windowStart, w
 
     import pandas as pd
 
-    dataDf[anchorDateColumn] = pd.to_datetime(dataDf[anchorDateColumn])
-    dataDf[measurementDateColumn] = pd.to_datetime(dataDf[measurementDateColumn])
+    dataDf[anchorDateColumn] = pd.to_datetime(dataDf[anchorDateColumn], format='%d/%m/%Y')
+    dataDf[measurementDateColumn] = pd.to_datetime(dataDf[measurementDateColumn], format='%d/%m/%Y')
     dataDf = dataDf[(dataDf[measurementDateColumn] >= (dataDf[anchorDateColumn] - pd.Timedelta(days=windowStart))) & (dataDf[measurementDateColumn] <= (dataDf[anchorDateColumn] + pd.Timedelta(days=windowEnd)))]
 
     return dataDf
