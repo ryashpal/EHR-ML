@@ -32,7 +32,7 @@ def run(dataPath, idColumns, targetColumn, measurementDateColumn, anchorDateColu
             log.info('Running evaluation for sample size: ' + str(sameplSize))
 
             sampledDataMatrix = datamatrixDf[datamatrixDf.visit_occurrence_id.isin(np.random.choice(datamatrixDf.visit_occurrence_id.unique(), size=sameplSize, replace=False))]
-            sampledDataMatrix.to_csv(savePath + '/data_matrix_sample_' + str(sameplSize) + '.csv', index=False)
+            sampledDataMatrix.to_csv(str(savePath) + '/data_matrix_sample_' + str(sameplSize) + '.csv', index=False)
 
             if ensemble:
                 evaluate_run(
@@ -47,7 +47,7 @@ def run(dataPath, idColumns, targetColumn, measurementDateColumn, anchorDateColu
                 )
             else:
                 data = DataUtils.readData(
-                    dirPath=savePath + '/data_matrix_sample_' + str(sameplSize) + '.csv',
+                    dirPath=str(savePath) + '/data_matrix_sample_' + str(sameplSize) + '.csv',
                     idColumns=idColumns,
                     targetColumn=targetColumn,
                     measurementDateColumn=measurementDateColumn,

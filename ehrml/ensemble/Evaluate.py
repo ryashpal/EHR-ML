@@ -25,6 +25,8 @@ def run(dataPath, idColumns, targetColumn, measurementDateColumn, anchorDateColu
         windowEnd=windowEnd,
         )
     X, XVitalsAvg, XVitalsMin, XVitalsMax, XVitalsFirst, XVitalsLast, XLabsAvg, XLabsMin, XLabsMax, XLabsFirst, XLabsLast, y, idsDf = data
+    log.info('Unique Persons: ' + str(len(idsDf.person_id.unique())))
+    log.info('Unique Visits: ' + str(idsDf.drop_duplicates().shape[0]))
 
     log.info('Building XGB ensemble model')
 

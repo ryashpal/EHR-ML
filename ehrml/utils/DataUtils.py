@@ -122,3 +122,9 @@ def saveModels(model, dirPath, fileName):
 
     with open(savePath, 'wb') as handle:
         pickle.dump(model, handle, protocol=pickle.HIGHEST_PROTOCOL)
+
+
+def generateLabels(dataDf, anchorColumn, targetColumn, timeDelta):
+    import pandas as pd
+    return ((dataDf[targetColumn] > dataDf[anchorColumn]) & (dataDf[targetColumn] < (dataDf[anchorColumn] + pd.to_timedelta(timeDelta,'d')))).apply(lambda x: 1 if x else 0)
+

@@ -39,22 +39,22 @@ def run(dataPath, idColumns, targetColumn, measurementDateColumn, anchorDateColu
             log.info('Running evaluation for class ratio: ' + str(label))
 
             sampledDataMatrix = pd.concat([dataMatrixPositiveDf.sample(n=positiveSize), dataMatrixNegativeDf.sample(n=negativeSize)])
-            sampledDataMatrix.to_csv(savePath + '/data_matrix_ratio_' + label + '.csv', index=False)
+            sampledDataMatrix.to_csv(str(savePath) + '/data_matrix_ratio_' + label + '.csv', index=False)
 
             if ensemble:
                 evaluate_run(
-                    dataPath=savePath + '/data_matrix_ratio_' + label + '.csv',
+                    dataPath=str(savePath) + '/data_matrix_ratio_' + label + '.csv',
                     idColumns=idColumns,
                     targetColumn=targetColumn,
                     measurementDateColumn=measurementDateColumn,
                     anchorDateColumn=anchorDateColumn,
                     windowStart=windowStart,
                     windowEnd=windowEnd,
-                    savePath=savePath + '/wb_' + str(windowStart) + '_wa_' + str(windowEnd) + '_ratio_' + label + '.json'
+                    savePath=str(savePath) + '/wb_' + str(windowStart) + '_wa_' + str(windowEnd) + '_ratio_' + label + '.json'
                 )
             else:
                 data = DataUtils.readData(
-                    dirPath=savePath + '/data_matrix_ratio_' + label + '.csv',
+                    dirPath=str(savePath) + '/data_matrix_ratio_' + label + '.csv',
                     idColumns=idColumns,
                     targetColumn=targetColumn,
                     measurementDateColumn=measurementDateColumn,

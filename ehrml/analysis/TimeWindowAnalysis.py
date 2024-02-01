@@ -47,6 +47,8 @@ def run(dataPath, idColumns, targetColumn, measurementDateColumn, anchorDateColu
                     windowEnd=windowEnd,
                     )
                 X, XVitalsAvg, XVitalsMin, XVitalsMax, XVitalsFirst, XVitalsLast, XLabsAvg, XLabsMin, XLabsMax, XLabsFirst, XLabsLast, y, idsDf = data
+                log.info('Unique Persons: ' + str(len(idsDf.person_id.unique())))
+                log.info('Unique Visits: ' + str(idsDf.drop_duplicates().shape[0]))
 
                 xgb = XGBClassifier(use_label_encoder=False)
                 xgbScores = cross_validate(xgb, X, y, cv=5, scoring=['accuracy', 'balanced_accuracy',  'average_precision', 'f1', 'roc_auc'])
