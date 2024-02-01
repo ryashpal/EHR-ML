@@ -25,6 +25,8 @@ from pathlib import Path
 
 def run(dataPath, idColumns, targetColumn, measurementDateColumn, anchorDateColumn, windowStart, windowEnd, sampleSizes, ensemble, savePath):
 
+    log.info('Reading data from file: ' + str(dataPath))
+
     datamatrixDf = pd.read_csv(dataPath)
 
     for sameplSize in sampleSizes:
@@ -32,7 +34,10 @@ def run(dataPath, idColumns, targetColumn, measurementDateColumn, anchorDateColu
             log.info('Running evaluation for sample size: ' + str(sameplSize))
 
             sampledDataMatrix = datamatrixDf[datamatrixDf.visit_occurrence_id.isin(np.random.choice(datamatrixDf.visit_occurrence_id.unique(), size=sameplSize, replace=False))]
-            sampledDataMatrix.to_csv(str(savePath) + '/data_matrix_sample_' + str(sameplSize) + '.csv', index=False)
+
+            log.info('Sampled data matrix: ' + str(sampledDataMatrix.shape))
+
+            sampledDataMatrix.to_csv(Path(savePath, 'data_matrix_sample_' + str(sameplSize) + '.csv'), index=False)
 
             if ensemble:
                 evaluate_run(
@@ -69,8 +74,7 @@ def run(dataPath, idColumns, targetColumn, measurementDateColumn, anchorDateColu
 
                 log.info('saving the predictions')
 
-                savePath = Path(savePath)
-                DataUtils.saveCvScores(xgbScores, savePath, 'wb_' + str(windowStart) + '_wa_' + str(windowEnd) + '_sample_' + str(sameplSize) + '.json')
+                DataUtils.saveCvScores(xgbScores, Path(savePath), 'wb_' + str(windowStart) + '_wa_' + str(windowEnd) + '_sample_' + str(sameplSize) + '.json')
 
 
 if __name__ == '__main__':

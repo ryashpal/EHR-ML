@@ -29,15 +29,18 @@ from pathlib import Path
 
 def run(dataPath, idColumns, targetColumn, measurementDateColumn, anchorDateColumn, windowStart, windowEnd, ensemble, savePath):
 
-    log.info('Creating original data matrix')
+    log.info('Reading data from file: ' + str(dataPath))
 
     dataDf = pd.read_csv(dataPath)
+
+    log.info('Creating original data matrix')
+
     dataDf.to_csv(savePath + '/data_matrix_original.csv', index=False)
+
+    log.info('Creating standard scaled data matrix')
 
     data_cols = dataDf.columns[(dataDf.columns.str.startswith('vitals') | dataDf.columns.str.startswith('labs'))]
     non_data_cols = dataDf.columns[~dataDf.columns.isin(data_cols)]
-
-    log.info('Creating standard scaled data matrix')
 
     standardScaler = StandardScaler()
     standardScaler.fit(dataDf[data_cols])

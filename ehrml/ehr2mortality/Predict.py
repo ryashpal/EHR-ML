@@ -14,6 +14,9 @@ from ehrml.utils import MlUtils
 
 
 def run(dirPath, idColumns, targetColumn, measurementDateColumn, anchorDateColumn, windowStart, windowEnd, modelPath, savePath):
+
+    log.info('Reading data from file: ' + str(dirPath))
+
     data = DataUtils.readData(
         dirPath=dirPath,
         idColumns=idColumns,
@@ -25,6 +28,8 @@ def run(dirPath, idColumns, targetColumn, measurementDateColumn, anchorDateColum
         )
     X, XVitalsAvg, XVitalsMin, XVitalsMax, XVitalsFirst, XVitalsLast, XLabsAvg, XLabsMin, XLabsMax, XLabsFirst, XLabsLast, y, idsDf = data
 
+    log.info('Predicting using XGB ensemble model')
+
     preds = MlUtils.predictEnsembleXGBoostModel(X, XVitalsAvg, XVitalsMin, XVitalsMax, XVitalsFirst, XVitalsLast, XLabsAvg, XLabsMin, XLabsMax, XLabsFirst, XLabsLast, y[args.target_column[0]], modelFilePath=modelPath)
 
     saveDf = idsDf
@@ -35,7 +40,7 @@ def run(dirPath, idColumns, targetColumn, measurementDateColumn, anchorDateColum
         log.info('Creating directory: ' + str(dirPath))
         os.makedirs(dirPath)
 
-    log.info('saving the predictions')
+    log.info('Saving to file: ' + str(savePath))
 
     saveDf.to_csv(savePath, index=False)
 

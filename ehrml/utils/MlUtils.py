@@ -483,6 +483,9 @@ def predictEnsembleXGBoostModel(X, XVitalsAvg, XVitalsMin, XVitalsMax, XVitalsFi
         'LabsLast': XLabsLast,
     }
     allModelsDict = {}
+
+    log.info('Model file: ' + str(modelFilePath))
+
     with open(modelFilePath, 'rb') as f:
         allModelsDict = pickle.load(f)
     standaloneModelsDict = allModelsDict['level_0']

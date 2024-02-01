@@ -62,8 +62,7 @@ def run(dataPath, idColumns, targetColumn, measurementDateColumn, anchorDateColu
 
                 log.info('saving the predictions')
 
-                savePath = Path(savePath)
-                DataUtils.saveCvScores(xgbScores, savePath, 'wb_' + str(windowStart) + '_wa_' + str(windowEnd) + '.json')
+                DataUtils.saveCvScores(xgbScores, Path(savePath), 'wb_' + str(windowStart) + '_wa_' + str(windowEnd) + '.json')
 
 
 if __name__ == '__main__':
