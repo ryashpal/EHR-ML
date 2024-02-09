@@ -24,6 +24,8 @@ from pathlib import Path
 
 def run(dataPath, idColumns, targetColumn, measurementDateColumn, anchorDateColumn, windowStart, windowEnd, positiveClassProportions, ensemble, savePath):
 
+    log.info('Reading data from file: ' + str(dataPath))
+
     datamatrixDf = pd.read_csv(dataPath)
 
     dataMatrixPositiveDf = datamatrixDf[datamatrixDf[targetColumn] == 1]
@@ -39,22 +41,25 @@ def run(dataPath, idColumns, targetColumn, measurementDateColumn, anchorDateColu
             log.info('Running evaluation for class ratio: ' + str(label))
 
             sampledDataMatrix = pd.concat([dataMatrixPositiveDf.sample(n=positiveSize), dataMatrixNegativeDf.sample(n=negativeSize)])
-            sampledDataMatrix.to_csv(savePath + '/data_matrix_ratio_' + label + '.csv', index=False)
+
+            log.info('Sampled data matrix: ' + str(sampledDataMatrix.shape))
+
+            sampledDataMatrix.to_csv(Path(savePath, 'data_matrix_ratio_' + str(label) + '.csv'), index=False)
 
             if ensemble:
                 evaluate_run(
-                    dataPath=savePath + '/data_matrix_ratio_' + label + '.csv',
+                    dataPath=str(savePath) + '/data_matrix_ratio_' + label + '.csv',
                     idColumns=idColumns,
                     targetColumn=targetColumn,
                     measurementDateColumn=measurementDateColumn,
                     anchorDateColumn=anchorDateColumn,
                     windowStart=windowStart,
                     windowEnd=windowEnd,
-                    savePath=savePath + '/wb_' + str(windowStart) + '_wa_' + str(windowEnd) + '_ratio_' + label + '.json'
+                    savePath=str(savePath) + '/wb_' + str(windowStart) + '_wa_' + str(windowEnd) + '_ratio_' + label + '.json'
                 )
             else:
                 data = DataUtils.readData(
-                    dirPath=savePath + '/data_matrix_ratio_' + label + '.csv',
+                    dirPath=str(savePath) + '/data_matrix_ratio_' + label + '.csv',
                     idColumns=idColumns,
                     targetColumn=targetColumn,
                     measurementDateColumn=measurementDateColumn,
@@ -76,8 +81,7 @@ def run(dataPath, idColumns, targetColumn, measurementDateColumn, anchorDateColu
 
                 log.info('saving the predictions')
 
-                savePath = Path(savePath)
-                DataUtils.saveCvScores(xgbScores, savePath, 'wb_' + str(windowStart) + '_wa_' + str(windowEnd) + '_ratio_' + label + '.json')
+                DataUtils.saveCvScores(xgbScores, Path(savePath), 'wb_' + str(windowStart) + '_wa_' + str(windowEnd) + '_ratio_' + label + '.json')
 
 
 if __name__ == '__main__':

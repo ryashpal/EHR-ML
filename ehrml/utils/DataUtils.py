@@ -7,8 +7,8 @@ def filterWindow(dataDf, anchorDateColumn, measurementDateColumn, windowStart, w
 
     import pandas as pd
 
-    dataDf[anchorDateColumn] = pd.to_datetime(dataDf[anchorDateColumn])
-    dataDf[measurementDateColumn] = pd.to_datetime(dataDf[measurementDateColumn])
+    dataDf[anchorDateColumn] = pd.to_datetime(dataDf[anchorDateColumn], format='%d/%m/%Y')
+    dataDf[measurementDateColumn] = pd.to_datetime(dataDf[measurementDateColumn], format='%d/%m/%Y')
     dataDf = dataDf[(dataDf[measurementDateColumn] >= (dataDf[anchorDateColumn] - pd.Timedelta(days=windowStart))) & (dataDf[measurementDateColumn] <= (dataDf[anchorDateColumn] + pd.Timedelta(days=windowEnd)))]
 
     return dataDf
@@ -122,3 +122,9 @@ def saveModels(model, dirPath, fileName):
 
     with open(savePath, 'wb') as handle:
         pickle.dump(model, handle, protocol=pickle.HIGHEST_PROTOCOL)
+
+
+def generateLabels(dataDf, anchorColumn, targetColumn, timeDelta):
+    import pandas as pd
+    return ((dataDf[targetColumn] > dataDf[anchorColumn]) & (dataDf[targetColumn] < (dataDf[anchorColumn] + pd.to_timedelta(timeDelta,'d')))).apply(lambda x: 1 if x else 0)
+
