@@ -1,4 +1,4 @@
-Web version of this utility can be accessed from this URL : https://ehr-ml-tutorials.readthedocs.io
+**Want to try it online?** Head over to [EHR-ML-Web](http://superbugai.erc.monash.edu:8081/)
 
 A comprehensive documentation is available at : https://ehr-ml-tutorials.readthedocs.io
 
