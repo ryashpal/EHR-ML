@@ -22,9 +22,9 @@ EHR-ML empowers predictive modeling in healthcare, offering a comprehensive suit
 
 **EHR-ML bridges the gap between complex healthcare data and actionable insights, enabling researchers and clinicians to make informed decisions and improve patient care.**
 
-![ehr_ml_methods](https://github.com/ryashpal/EHR-ML/assets/56529301/5f58046a-2cb2-46b9-846d-dae5eee17bba)
+## EHR-ML Pipeline
 
-## More Information
+![ehr_ml_methods](https://github.com/ryashpal/EHR-ML/assets/56529301/5f58046a-2cb2-46b9-846d-dae5eee17bba)
 
 ## More Information
 
