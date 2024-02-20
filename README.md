@@ -36,3 +36,10 @@ EHR-ML empowers predictive modeling in healthcare, offering a comprehensive suit
 
 * Yashpal Ramakrishnaiah, Nenad Macesic, Geoffrey I. Webb, Anton Y. Peleg, Sonika Tyagi: EHR-ML: A generalisable pipeline for reproducible clinical1
 outcomes using electronic health records
+
+## Acknowledgements
+
+![monash](https://github.com/ryashpal/EHR-ML/assets/56529301/4bf459a0-13f4-4f94-bc1d-dc88a045171d)
+![alfred](https://github.com/ryashpal/EHR-ML/assets/56529301/f1129efe-e302-40fc-9da6-28460c33c4d9)
+![superbugai](https://github.com/ryashpal/EHR-ML/assets/56529301/4c34f34d-a0fd-45bd-99c1-41bfe149187a)
+![RMIT_University_Logo](https://github.com/ryashpal/EHR-ML/assets/56529301/ff39f495-5488-4690-9216-631554abbf4e)
