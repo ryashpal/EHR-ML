@@ -368,3 +368,41 @@ def calculateApacheiiMortalityRisk(apache_ii, admissionType):
         else:
             return 1
     return None
+
+
+def calculatePBS(temperature, systolicBp, intravenousVasopressor, mechanicalVentillation, cardiacArrest, mentalStatus):
+    
+    score = 0
+
+    if (temperature <= 35):
+        score += 2
+    elif (temperature <= 36):
+        score += 1
+    elif (temperature < 39):
+        score += 0
+    elif (temperature < 40):
+        score += 1
+    else:
+        score += 2
+
+    if (systolicBp < 90):
+        score += 2
+    elif (intravenousVasopressor):
+        score += 2
+
+    if (mechanicalVentillation):
+        score += 2
+
+    if (cardiacArrest):
+        score += 2
+
+    if (mentalStatus == 'Alert'):
+        score += 0
+    elif (mentalStatus == 'Disoriented'):
+        score += 1
+    elif (mentalStatus == 'Stuporous'):
+        score += 2
+    elif (mentalStatus == 'Comatose'):
+        score += 4
+
+    return score
