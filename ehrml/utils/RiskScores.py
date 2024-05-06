@@ -371,7 +371,7 @@ def calculateApacheiiMortalityRisk(apache_ii, admissionType):
 
 
 def calculatePBS(temperature, systolicBp, intravenousVasopressor, mechanicalVentillation, cardiacArrest, mentalStatus):
-    
+
     score = 0
 
     if (temperature <= 35):
