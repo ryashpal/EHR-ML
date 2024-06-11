@@ -32,8 +32,6 @@ def run(dirPath, idColumns, targetColumn, measurementDateColumn, anchorDateColum
 
     preds = MlUtils.predictEnsembleXGBoostModel(X, XVitalsAvg, XVitalsMin, XVitalsMax, XVitalsFirst, XVitalsLast, XLabsAvg, XLabsMin, XLabsMax, XLabsFirst, XLabsLast, y[targetColumn], modelFilePath=modelPath)
 
-    log.info('preds: ' + str(preds))
-
     saveDf = idsDf
     saveDf['preds'] = preds
 
