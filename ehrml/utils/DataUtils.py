@@ -7,8 +7,8 @@ def filterWindow(dataDf, anchorDateColumn, measurementDateColumn, windowStart, w
 
     import pandas as pd
 
-    dataDf[anchorDateColumn] = pd.to_datetime(dataDf[anchorDateColumn], format='%d/%m/%Y')
-    dataDf[measurementDateColumn] = pd.to_datetime(dataDf[measurementDateColumn], format='%d/%m/%Y')
+    dataDf[anchorDateColumn] = pd.to_datetime(dataDf[anchorDateColumn], format='%Y-%m-%d')
+    dataDf[measurementDateColumn] = pd.to_datetime(dataDf[measurementDateColumn], format='%Y-%m-%d')
     dataDf = dataDf[(dataDf[measurementDateColumn] >= (dataDf[anchorDateColumn] - pd.Timedelta(days=windowStart))) & (dataDf[measurementDateColumn] <= (dataDf[anchorDateColumn] + pd.Timedelta(days=windowEnd)))]
 
     return dataDf
@@ -79,6 +79,51 @@ def readData(dirPath, idColumns=['id'], targetColumn='target', anchorDateColumn=
     yAgg = yAgg.drop(columns=idColumns)
 
     return XAgg, XVitalsAvgAgg, XVitalsMinAgg, XVitalsMaxAgg, XVitalsFirstAgg, XVitalsLastAgg, XLabsAvgAgg, XLabsMinAgg, XLabsMaxAgg, XLabsFirstAgg, XLabsLastAgg, yAgg, idsDf
+
+def getDataDict(dirPath, idColumns, targetColumn, measurementDateColumn, anchorDateColumn, windowStart, windowEnd):
+
+    from sklearn.model_selection import train_test_split
+
+    data = readData(
+        dirPath=dirPath,
+        idColumns=idColumns,
+        targetColumn=targetColumn,
+        measurementDateColumn=measurementDateColumn,
+        anchorDateColumn=anchorDateColumn,
+        windowStart=windowStart,
+        windowEnd=windowEnd,
+        )
+    X, XVitalsAvg, XVitalsMin, XVitalsMax, XVitalsFirst, XVitalsLast, XLabsAvg, XLabsMin, XLabsMax, XLabsFirst, XLabsLast, y, idsDf = data
+    XTrain, XTest, XVitalsAvgTrain, XVitalsAvgTest, XVitalsMinTrain, XVitalsMinTest, XVitalsMaxTrain, XVitalsMaxTest, XVitalsFirstTrain, XVitalsFirstTest, XVitalsLastTrain, XVitalsLastTest, XLabsAvgTrain, XLabsAvgTest, XLabsMinTrain, XLabsMinTest, XLabsMaxTrain, XLabsMaxTest, XLabsFirstTrain, XLabsFirstTest, XLabsLastTrain, XLabsLastTest, yTrain, yTest = train_test_split(
+        X,
+        XVitalsAvg,
+        XVitalsMin,
+        XVitalsMax,
+        XVitalsFirst,
+        XVitalsLast,
+        XLabsAvg,
+        XLabsMin,
+        XLabsMax,
+        XLabsFirst,
+        XLabsLast,
+        y,
+        test_size=0.5,
+        random_state=42
+        )
+    dataDict = {
+        'Full': (XTrain, yTrain, XTest, yTest),
+        'VitalsMax': (XVitalsMaxTrain, yTrain, XVitalsMaxTest, yTest),
+        'VitalsMin': (XVitalsMinTrain, yTrain, XVitalsMinTest, yTest),
+        'VitalsAvg': (XVitalsAvgTrain, yTrain, XVitalsAvgTest, yTest),
+        'VitalsFirst': (XVitalsFirstTrain, yTrain, XVitalsFirstTest, yTest),
+        'VitalsLast': (XVitalsLastTrain, yTrain, XVitalsLastTest, yTest),
+        'LabsMax': (XLabsMaxTrain, yTrain, XLabsMaxTest, yTest),
+        'LabsMin': (XLabsMinTrain, yTrain, XLabsMinTest, yTest),
+        'LabsAvg': (XLabsAvgTrain, yTrain, XLabsAvgTest, yTest),
+        'LabsFirst': (XLabsFirstTrain, yTrain, XLabsFirstTest, yTest),
+        'LabsLast': (XLabsLastTrain, yTrain, XLabsLastTest, yTest),
+    }
+    return dataDict
 
 
 def saveCvScores(scores_dict, dirPath, fileName):
