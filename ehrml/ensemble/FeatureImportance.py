@@ -14,7 +14,7 @@ import pandas as pd
 from pathlib import Path
 
 
-def run(modelPath, intermediate, savePath):
+def run(modelPath, intermediate, plot, features, savePath):
 
     featureImportanceDfList = []
 
@@ -49,11 +49,30 @@ def run(modelPath, intermediate, savePath):
         log.info('Creating directory: ' + str(dirPath))
         os.makedirs(dirPath)
 
-    log.info('Saving to file: ' + str(savePath))
+    log.info('Saving to path: ' + str(savePath))
 
-    featureImportanceDf = pd.concat(featureImportanceDfList, ignore_index=True)
+    Path(savePath).mkdir(parents=True, exist_ok=True)
 
-    featureImportanceDf.to_csv(savePath, index=False)
+    log.info('Saving feature importance scores')
+    
+    featureImportanceCsvFile = savePath + '/ensemble_feature_importance.csv'
+
+    featureImportanceDf = pd.concat(featureImportanceCsvFile, ignore_index=True)
+
+    featureImportanceDf.to_csv(featureImportanceDfList, index=False)
+
+    if(plot):
+
+        log.info('Plotting feature importance scores')
+
+        featureImportancePlotFile = savePath + '/ensemble_feature_importance_' + str(features) + '.png'
+
+        plotDf = featureImportanceDf.sort_values(by=['Feature_Importance'], ascending=False)[:features]
+
+        from matplotlib import pyplot as plt
+
+        plt.barh(y=plotDf.Feature_Name, width=plotDf.Feature_Importance)
+        plt.savefig(featureImportancePlotFile, bbox_inches='tight')
 
 
 if __name__ == '__main__':
@@ -80,17 +99,27 @@ if __name__ == '__main__':
     parser.add_argument('-i', '--intermediate', action='store_true',
                         help='Include feature importance of intermediate features')
 
-    parser.add_argument('-sp', '--save_path', nargs=1, default='./ensemble_feature_importance.csv',
+    parser.add_argument('-p', '--plot', action='store_true',
+                        help='Plot the important features')
+
+    parser.add_argument('-f', '--features', nargs=1, type=int, default=10,
+                        help='Number of features to plot (required only with the -p option). By default: [features=10]')
+
+    parser.add_argument('-sp', '--save_path', nargs=1, default='./',
                         help='File path to save the feature importance')
 
     args = parser.parse_args()
 
     log.info('args.model_file: ' + str(args.model_file[0]))
     log.info('args.intermediate: ' + str(args.intermediate))
+    log.info('args.plot: ' + str(args.plot))
+    log.info('args.features: ' + str(args.features[0]))
     log.info('args.save_path: ' + str(args.save_path[0]))
 
     run(
         modelPath=args.model_file[0],
         intermediate=args.intermediate,
+        plot=args.plot,
+        features=args.features,
         savePath=args.save_path[0]
     )
