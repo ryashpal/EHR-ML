@@ -57,9 +57,9 @@ def run(modelPath, intermediate, plot, features, savePath):
     
     featureImportanceCsvFile = savePath + '/ensemble_feature_importance.csv'
 
-    featureImportanceDf = pd.concat(featureImportanceCsvFile, ignore_index=True)
+    featureImportanceDf = pd.concat(featureImportanceDfList, ignore_index=True)
 
-    featureImportanceDf.to_csv(featureImportanceDfList, index=False)
+    featureImportanceDf.to_csv(featureImportanceCsvFile, index=False)
 
     if(plot):
 
@@ -120,6 +120,6 @@ if __name__ == '__main__':
         modelPath=args.model_file[0],
         intermediate=args.intermediate,
         plot=args.plot,
-        features=args.features,
+        features=args.features[0],
         savePath=args.save_path[0]
     )
