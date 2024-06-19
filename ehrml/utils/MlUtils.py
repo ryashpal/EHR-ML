@@ -265,6 +265,7 @@ def evaluateEnsembleXGBoostModel(X, XVitalsAvg, XVitalsMin, XVitalsMax, XVitalsF
     lrGrid = GridSearchCV(LogisticRegression(), lrParameters)
     lrGrid.fit(XVitalsAvgTrain, yTrain)
 
+    # lrParams = {}
     lrParams = lrGrid.cv_results_['params'][list(lrGrid.cv_results_['rank_test_score']).index(1)]
 
     log.info('Performing Hyperparameter optimisation for XGBoost full model')
@@ -282,6 +283,7 @@ def evaluateEnsembleXGBoostModel(X, XVitalsAvg, XVitalsMin, XVitalsMax, XVitalsF
     lrGrid = GridSearchCV(LogisticRegression(), lrParameters)
     lrGrid.fit(XTrain, yTrain)
 
+    # lrFullParams = {}
     lrFullParams = lrGrid.cv_results_['params'][list(lrGrid.cv_results_['rank_test_score']).index(1)]
 
     XDict = {
