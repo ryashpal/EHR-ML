@@ -120,6 +120,6 @@ if __name__ == '__main__':
         modelPath=args.model_file[0],
         intermediate=args.intermediate,
         plot=args.plot,
-        features=int(args.features[0]),
+        features=args.features[0],
         savePath=args.save_path[0]
     )
