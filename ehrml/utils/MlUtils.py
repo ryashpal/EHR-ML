@@ -452,7 +452,8 @@ def buildEnsembleXGBoostModel(X, XVitalsAvg, XVitalsMin, XVitalsMax, XVitalsFirs
 
     log.info('Performing Hyperparameter optimisation for XGBoost Ensemble model')
 
-    xgbParams = performXgbHyperparameterTuning(Xnew, yTest)
+    xgbParams = {}
+    # xgbParams = performXgbHyperparameterTuning(Xnew, yTest)
 
     log.info('Building XGB Ensemble model')
 
